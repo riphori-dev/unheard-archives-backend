@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Common\Behaviors\" />
+    <Folder Include="Common\Exceptions\" />
+    <Folder Include="Confessions\Commands\DeleteConfession\" />
+    <Folder Include="Confessions\Commands\ApproveConfession\" />
+    <Folder Include="Confessions\Queries\GetConfessions\" />
+    <Folder Include="Confessions\Queries\GetConfessionById\" />
+    <Folder Include="Daily_Echoes\" />
+    <Folder Include="Daily_Echo_Interactions\" />
+    <Folder Include="Constellation_Nodes\" />
+    <Folder Include="Reports\" />
+    <Folder Include="Resonances\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="12.1.1" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+    <PackageReference Include="MediatR" Version="14.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tywynh.Domain\Tywynh.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

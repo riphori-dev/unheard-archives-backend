@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Tywynh.Application/Tywynh.Application.csproj" />
+  <Project Path="Tywynh.Domain/Tywynh.Domain.csproj" />
+</Solution>
