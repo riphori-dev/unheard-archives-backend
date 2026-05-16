@@ -14,5 +14,5 @@ namespace Tywynh.Application.Confessions.Commands.CreateConfession
         ConfessionCategory Category,
         short Intensity,
         string Alias
-    ) : IRequest<Guid>;
+    ) : IRequest<CreateConfessionDTO>;
 }

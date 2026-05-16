@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Tywynh.Domain.Exceptions;
 
 namespace Tywynh.Domain.Entities
 {
@@ -12,20 +9,45 @@ namespace Tywynh.Domain.Entities
     public class Resonance
     {
         [Key]
-        public Guid Id { get; set; }
+        public Guid Id { get; private set; }
 
         [Required]
-        public Guid ConfessionId { get; set; }
+        public Guid ConfessionId { get; private set; }
 
         [ForeignKey(nameof(ConfessionId))]
-        public Confession Confession { get; set; } = default!;
+        public Confession Confession { get; private set; } = default!;
 
-        public Guid? UserId { get; set; }
+        public Guid? UserId { get; private set; }
 
         [MaxLength(255)]
-        public string? AnonFingerprint { get; set; }
+        public string? AnonFingerprint { get; private set; }
 
         [Required]
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; private set; }
+
+        // Required by EF
+        private Resonance() { }
+
+        public static Resonance Create(
+            Guid confessionId,
+            Guid? userId,
+            string? anonFingerprint)
+        {
+            if (userId == null &&
+                string.IsNullOrWhiteSpace(anonFingerprint))
+            {
+                throw new DomainException(
+                    "UserId or AnonFingerprint is required.");
+            }
+
+            return new Resonance
+            {
+                Id = Guid.NewGuid(),
+                ConfessionId = confessionId,
+                UserId = userId,
+                AnonFingerprint = anonFingerprint,
+                CreatedAt = DateTime.UtcNow
+            };
+        }
     }
 }

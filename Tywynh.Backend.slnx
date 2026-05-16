@@ -1,4 +1,6 @@
 <Solution>
+  <Project Path="Tywynh.API/Tywynh.API.csproj" Id="fa132839-2ed6-4a5f-9e83-267d228a84da" />
   <Project Path="Tywynh.Application/Tywynh.Application.csproj" />
   <Project Path="Tywynh.Domain/Tywynh.Domain.csproj" />
+  <Project Path="Tywynh.Infrastructure/Tywynh.Infrastructure.csproj" Id="60f72ae3-aaba-45c2-bbdc-a236bdb544fa" />
 </Solution>

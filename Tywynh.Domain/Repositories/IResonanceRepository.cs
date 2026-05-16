@@ -9,5 +9,6 @@ namespace Tywynh.Domain.Repositories
 {
     public interface IResonanceRepository : IBaseRepo<Resonance>
     {
+        Task<IEnumerable<Resonance>> GetByConfessionIdAsync(Guid confessionId, CancellationToken ct = default);
     }
 }

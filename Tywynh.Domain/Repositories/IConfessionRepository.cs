@@ -9,5 +9,8 @@ namespace Tywynh.Domain.Repositories
 {
     public interface IConfessionRepository : IBaseRepo<Confession>
     {
+        new Task<Confession> GetByIdAsync(Guid id, CancellationToken ct = default);
+        Task UpdateAsync(Confession confession, CancellationToken ct = default);
+        Task DeleteAsync(Confession confession, CancellationToken ct = default);
     }
 }
