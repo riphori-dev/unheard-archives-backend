@@ -8,6 +8,11 @@ using Tywynh.Infrastructure;
 
 using Microsoft.Extensions.Configuration.Json;
 
+// Prevent the runtime from creating many inotify watchers in container environments
+// (e.g. Render). This forces the configuration system to use a polling file
+// watcher which avoids the inotify instance limit.
+System.Environment.SetEnvironmentVariable("DOTNET_USE_POLLING_FILE_WATCHER", "1");
+
 var builder = WebApplication.CreateBuilder(args);
 
 foreach (var source in builder.Configuration.Sources.OfType<JsonConfigurationSource>())
@@ -85,4 +90,6 @@ if (app.Environment.IsDevelopment())
 app.UseRateLimiter();
 app.UseAuthorization();
 app.MapControllers();
+// Lightweight health endpoint so the platform can probe the root path.
+app.MapGet("/", () => Results.Ok(new { status = "ok" }));
 app.Run();
