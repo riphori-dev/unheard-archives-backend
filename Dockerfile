@@ -3,9 +3,12 @@ WORKDIR /src
 
 COPY . .
 
-RUN dotnet restore
+RUN dotnet restore Tywynh.API/Tywynh.API.csproj
 
-RUN dotnet publish Tywynh.API/Tywynh.API.csproj -c Release -o /app/publish --no-restore
+RUN dotnet publish Tywynh.API/Tywynh.API.csproj \
+    -c Release \
+    -o /app/publish \
+    --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
