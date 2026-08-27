@@ -6,7 +6,14 @@ using Tywynh.API.Services;
 using Tywynh.Application;
 using Tywynh.Infrastructure;
 
+using Microsoft.Extensions.Configuration.Json;
+
 var builder = WebApplication.CreateBuilder(args);
+
+foreach (var source in builder.Configuration.Sources.OfType<JsonConfigurationSource>())
+{
+    source.ReloadOnChange = false;
+}
 
 // JSON: snake_case to match frontend contract
 builder.Services.AddControllers()
