@@ -71,6 +71,12 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 // API services
 builder.Services.AddScoped<VisitorTokenService>();
+// Gemini reflection service and HttpClient
+builder.Services.AddHttpClient<Tywynh.API.Services.IReflectionService, Tywynh.API.Services.ReflectionService>(client =>
+{
+    client.BaseAddress = new Uri("https://generativelanguage.googleapis.com/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
 
 var app = builder.Build();
 
