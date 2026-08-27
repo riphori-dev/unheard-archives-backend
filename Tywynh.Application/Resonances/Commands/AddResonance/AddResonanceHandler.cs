@@ -10,7 +10,7 @@ using Tywynh.Domain.Repositories;
 
 namespace Tywynh.Application.Resonances.Commands.AddResonance
 {
-    public class AddResonanceHandler : IRequestHandler<AddResonanceCommand, bool>
+    public class AddResonanceHandler : IRequestHandler<AddResonanceCommand, Tywynh.Application.Resonances.DTOs.ResonanceResultDto>
     {
         private readonly IResonanceRepository _resonanceRepository;
         private readonly IConfessionRepository _confessionRepository;
@@ -26,7 +26,7 @@ namespace Tywynh.Application.Resonances.Commands.AddResonance
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<bool> Handle(AddResonanceCommand request, CancellationToken cancellationToken)
+        public async Task<Tywynh.Application.Resonances.DTOs.ResonanceResultDto> Handle(AddResonanceCommand request, CancellationToken cancellationToken)
         {
             // Get the confession to increment its resonance count
             var confession = await _confessionRepository.GetByIdAsync(request.ConfessionId, cancellationToken);
@@ -36,11 +36,21 @@ namespace Tywynh.Application.Resonances.Commands.AddResonance
                 throw new KeyNotFoundException($"Confession with ID {request.ConfessionId} not found.");
             }
 
+            // If this visitor already resonated, return current count with IsNew=false
+            if (!string.IsNullOrWhiteSpace(request.VisitorTokenHash))
+            {
+                var exists = await _resonanceRepository.ExistsAsync(request.ConfessionId, request.VisitorTokenHash, cancellationToken);
+                if (exists)
+                {
+                    return new Tywynh.Application.Resonances.DTOs.ResonanceResultDto(confession.ResonanceCount, false);
+                }
+            }
+
             // Create the resonance record
             var resonance = Resonance.Create(
                 request.ConfessionId,
                 request.UserId,
-                request.AnonFingerprint
+                request.VisitorTokenHash
             );
 
             // Increment the confession's resonance count
@@ -51,7 +61,7 @@ namespace Tywynh.Application.Resonances.Commands.AddResonance
             await _confessionRepository.UpdateAsync(confession, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            return true;
+            return new Tywynh.Application.Resonances.DTOs.ResonanceResultDto(confession.ResonanceCount, true);
         }
     }
 }

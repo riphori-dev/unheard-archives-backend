@@ -12,5 +12,11 @@ namespace Tywynh.Domain.Repositories
         new Task<Confession> GetByIdAsync(Guid id, CancellationToken ct = default);
         Task UpdateAsync(Confession confession, CancellationToken ct = default);
         Task DeleteAsync(Confession confession, CancellationToken ct = default);
+        Task<(IEnumerable<Confession> Items, int TotalCount)> GetPagedAsync(
+            string? category,
+            string sort,
+            int page,
+            int pageSize,
+            CancellationToken ct = default);
     }
 }

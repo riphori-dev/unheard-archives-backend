@@ -14,11 +14,13 @@ namespace Tywynh.Application
         {
             var assembly = typeof(DependencyInjection).Assembly;
 
-            services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(assembly));
+            services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssembly(assembly);
+                cfg.AddBehavior(typeof(MediatR.IPipelineBehavior<,>), typeof(Tywynh.Application.Common.ValidationPipelineBehavior<,>));
+            });
 
             services.AddValidatorsFromAssembly(assembly);
-
-            //for addition of pipeline behavior here
 
             return services;
         }

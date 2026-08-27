@@ -29,6 +29,13 @@ namespace Tywynh.Domain.Entities
         [Required]
         public bool Approved { get; private set; }
 
+        [Required, MaxLength(20)]
+        public string ModerationStatus { get; private set; } = "pending";
+
+        public string? RejectionReason { get; private set; }
+
+        public DateTime? ModeratedAt { get; private set; }
+
         [Required]
         public int ResonanceCount { get; private set; }
 
@@ -74,6 +81,7 @@ namespace Tywynh.Domain.Entities
                 AuthorId = authorId,
                 Alias = alias.Trim(),
                 Approved = false,
+                ModerationStatus = "pending",
                 Burned = false,
                 ResonanceCount = 0,
                 EchoCount = 0,
@@ -87,11 +95,27 @@ namespace Tywynh.Domain.Entities
 
         public void Approve()
         {
-            if (Approved)
-                return;
-
+            if (ModerationStatus == "approved") return;
+            ModerationStatus = "approved";
             Approved = true;
             ApprovedAt = DateTime.UtcNow;
+            ModeratedAt = DateTime.UtcNow;
+        }
+
+        public void Reject(string? reason)
+        {
+            ModerationStatus = "rejected";
+            RejectionReason = reason;
+            ModeratedAt = DateTime.UtcNow;
+            Approved = false;
+        }
+
+        public void SoftDelete()
+        {
+            ModerationStatus = "deleted";
+            Burned = true;
+            ModeratedAt = DateTime.UtcNow;
+            Approved = false;
         }
 
         public void Burn()

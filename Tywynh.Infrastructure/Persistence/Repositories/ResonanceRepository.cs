@@ -51,5 +51,16 @@ namespace Tywynh.Infrastructure.Persistence.Repositories
                 .ToListAsync(ct);
         }
 
+        public async Task<Resonance?> GetByConfessionAndTokenAsync(Guid confessionId, string visitorTokenHash, CancellationToken ct = default)
+        {
+            return await _context.Set<Resonance>()
+                .FirstOrDefaultAsync(r => r.ConfessionId == confessionId && r.VisitorTokenHash == visitorTokenHash, ct);
+        }
+
+        public async Task<bool> ExistsAsync(Guid confessionId, string visitorTokenHash, CancellationToken ct = default)
+        {
+            return await _context.Resonances.AnyAsync(r => r.ConfessionId == confessionId && r.VisitorTokenHash == visitorTokenHash, ct);
+        }
+
     }
 }

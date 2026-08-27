@@ -1,55 +1,81 @@
-using Npgsql;
+using System.Threading.RateLimiting;
+using System.Text.Json;
+using Microsoft.AspNetCore.RateLimiting;
+using Tywynh.API.Middleware;
+using Tywynh.API.Services;
 using Tywynh.Application;
-using Tywynh.Domain.Enums;
 using Tywynh.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add CORS
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend",
-        policy =>
-        {
-            policy
-                .WithOrigins("http://localhost:8080")
-                .AllowAnyHeader()
-                .AllowAnyMethod();
-        });
-});
+// JSON: snake_case to match frontend contract
+builder.Services.AddControllers()
+    .AddJsonOptions(o =>
+        o.JsonSerializerOptions.PropertyNamingPolicy = new Tywynh.API.Json.SnakeCaseNamingPolicy());
 
-
-// Add services to the container.
-
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Register Application layer (CQRS handlers, validators, etc.)
-builder.Services.AddApplication();
+// CORS — allow frontend origin with credentials for visitor_token cookie
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? new[] { "http://localhost:8080" };
+builder.Services.AddCors(options =>
+    options.AddPolicy("AllowFrontend", policy =>
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials()));
 
-// Register Infrastructure services
+// Rate limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("submission", o =>
+    {
+        o.PermitLimit = 3;
+        o.Window = TimeSpan.FromHours(1);
+        o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        o.QueueLimit = 0;
+    });
+    options.AddFixedWindowLimiter("resonance", o =>
+    {
+        o.PermitLimit = 60;
+        o.Window = TimeSpan.FromHours(1);
+        o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        o.QueueLimit = 0;
+    });
+    options.AddFixedWindowLimiter("echo", o =>
+    {
+        o.PermitLimit = 10;
+        o.Window = TimeSpan.FromHours(1);
+        o.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        o.QueueLimit = 0;
+    });
+    options.RejectionStatusCode = 429;
+});
+
+// Application and infrastructure
+builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-NpgsqlConnection.GlobalTypeMapper.MapEnum<ConfessionCategory>();
+// API services
+builder.Services.AddScoped<VisitorTokenService>();
 
 var app = builder.Build();
 
-// Use CORS
+app.UseMiddleware<ExceptionMiddleware>();
+
 app.UseCors("AllowFrontend");
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Removed UseHttpsRedirection entirely for local dev
+// Add it back in production behind an environment check if needed
 
+app.UseRateLimiter();
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();

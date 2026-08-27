@@ -4,9 +4,8 @@ namespace Tywynh.Application.DailyEchoes.Commands.AddInteraction
 {
     public record AddInteractionCommand(
         DateTime EchoDate,
-        Guid? UserId,
-        string? AnonFingerprint,
+        string? VisitorTokenHash,
         bool RitualCompleted = false,
         bool Echoed = false
-    ) : IRequest<bool>;
+    ) : IRequest<Tywynh.Application.DailyEchoes.DTOs.EchoInteractResultDto>;
 }

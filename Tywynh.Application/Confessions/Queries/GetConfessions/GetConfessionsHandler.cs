@@ -9,7 +9,7 @@ using Tywynh.Domain.Repositories;
 
 namespace Tywynh.Application.Confessions.Queries.GetConfessions
 {
-    public class GetConfessionsHandler : IRequestHandler<GetConfessionsQuery, IEnumerable<ConfessionDto>>
+    public class GetConfessionsHandler : IRequestHandler<GetConfessionsQuery, Tywynh.Application.Common.PagedResult<ConfessionDto>>
     {
         private readonly IConfessionRepository _confessionRepository;
 
@@ -18,11 +18,16 @@ namespace Tywynh.Application.Confessions.Queries.GetConfessions
             _confessionRepository = confessionRepository;
         }
 
-        public async Task<IEnumerable<ConfessionDto>> Handle(GetConfessionsQuery request, CancellationToken cancellationToken)
+        public async Task<Tywynh.Application.Common.PagedResult<ConfessionDto>> Handle(GetConfessionsQuery request, CancellationToken cancellationToken)
         {
-            var confessions = await _confessionRepository.GetAllAsync(cancellationToken);
-            
-            return confessions.Select(confession => new ConfessionDto
+            var (items, totalCount) = await _confessionRepository.GetPagedAsync(
+                request.Category,
+                request.Sort,
+                request.Page,
+                request.PageSize,
+                cancellationToken);
+
+            var confessions = items.Select(confession => new ConfessionDto
             {
                 Id = confession.Id,
                 Text = confession.Text,
@@ -37,6 +42,8 @@ namespace Tywynh.Application.Confessions.Queries.GetConfessions
                 CreatedAt = confession.CreatedAt,
                 ApprovedAt = confession.ApprovedAt
             });
+
+            return new Tywynh.Application.Common.PagedResult<ConfessionDto>(confessions, totalCount, request.Page, request.PageSize);
         }
     }
 }

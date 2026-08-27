@@ -10,7 +10,7 @@ using Tywynh.Domain.Repositories;
 
 namespace Tywynh.Application.DailyEchoes.Commands.AddInteraction
 {
-    public class AddInteractionHandler : IRequestHandler<AddInteractionCommand, bool>
+    public class AddInteractionHandler : IRequestHandler<AddInteractionCommand, Tywynh.Application.DailyEchoes.DTOs.EchoInteractResultDto>
     {
         private readonly IDailyEchoInteractionRepository _dailyEchoInteractionRepository;
         private readonly IDailyEchoRepository _dailyEchoRepository;
@@ -26,7 +26,7 @@ namespace Tywynh.Application.DailyEchoes.Commands.AddInteraction
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<bool> Handle(AddInteractionCommand request, CancellationToken cancellationToken)
+        public async Task<Tywynh.Application.DailyEchoes.DTOs.EchoInteractResultDto> Handle(AddInteractionCommand request, CancellationToken cancellationToken)
         {
             // Ensure daily echo exists for the date
             var dailyEcho = await _dailyEchoRepository.GetByIdAsync(request.EchoDate, cancellationToken);
@@ -37,25 +37,33 @@ namespace Tywynh.Application.DailyEchoes.Commands.AddInteraction
 
             // Check if user has already interacted with this daily echo
             var existingInteraction = await _dailyEchoInteractionRepository
-                .GetByEchoDateAndUserAsync(request.EchoDate, request.AnonFingerprint, cancellationToken);
-
+                .GetByEchoDateAndUserAsync(request.EchoDate, request.VisitorTokenHash, cancellationToken);
             if (existingInteraction == null)
             {
                 // Create new interaction
                 var interaction = DailyEchoInteraction.Create(
                     request.EchoDate,
-                    request.UserId,
-                    request.AnonFingerprint,
+                    request.VisitorTokenHash,
                     request.RitualCompleted,
                     request.Echoed);
 
                 await _dailyEchoInteractionRepository.AddAsync(interaction, cancellationToken);
+
+                if (request.Echoed)
+                {
+                    dailyEcho.AddEcho();
+                    await _dailyEchoRepository.UpdateAsync(dailyEcho, cancellationToken);
+                }
+
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
-                return true;
+
+                return new Tywynh.Application.DailyEchoes.DTOs.EchoInteractResultDto(dailyEcho.EchoCount, true);
             }
             else
             {
                 // Update existing interaction
+                var isNew = false;
+
                 if (request.RitualCompleted && !existingInteraction.RitualCompleted)
                 {
                     existingInteraction.MarkRitualCompleted();
@@ -63,11 +71,15 @@ namespace Tywynh.Application.DailyEchoes.Commands.AddInteraction
                 if (request.Echoed && !existingInteraction.Echoed)
                 {
                     existingInteraction.MarkEchoed();
+                    dailyEcho.AddEcho();
+                    await _dailyEchoRepository.UpdateAsync(dailyEcho, cancellationToken);
+                    isNew = true;
                 }
-                
+
                 await _dailyEchoInteractionRepository.UpdateAsync(existingInteraction, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
-                return true;
+
+                return new Tywynh.Application.DailyEchoes.DTOs.EchoInteractResultDto(dailyEcho.EchoCount, isNew);
             }
         }
     }

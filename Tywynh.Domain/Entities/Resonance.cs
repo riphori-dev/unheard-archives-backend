@@ -20,7 +20,7 @@ namespace Tywynh.Domain.Entities
         public Guid? UserId { get; private set; }
 
         [MaxLength(255)]
-        public string? AnonFingerprint { get; private set; }
+        public string? VisitorTokenHash { get; private set; }
 
         [Required]
         public DateTime CreatedAt { get; private set; }
@@ -31,13 +31,12 @@ namespace Tywynh.Domain.Entities
         public static Resonance Create(
             Guid confessionId,
             Guid? userId,
-            string? anonFingerprint)
+            string? visitorTokenHash)
         {
-            if (userId == null &&
-                string.IsNullOrWhiteSpace(anonFingerprint))
+            if (string.IsNullOrWhiteSpace(visitorTokenHash))
             {
                 throw new DomainException(
-                    "UserId or AnonFingerprint is required.");
+                    "VisitorTokenHash is required.");
             }
 
             return new Resonance
@@ -45,7 +44,7 @@ namespace Tywynh.Domain.Entities
                 Id = Guid.NewGuid(),
                 ConfessionId = confessionId,
                 UserId = userId,
-                AnonFingerprint = anonFingerprint,
+                VisitorTokenHash = visitorTokenHash,
                 CreatedAt = DateTime.UtcNow
             };
         }

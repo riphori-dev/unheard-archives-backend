@@ -17,7 +17,6 @@
     <Folder Include="Daily_Echo_Interactions\" />
     <Folder Include="Constellation_Nodes\" />
     <Folder Include="Reports\" />
-    <Folder Include="Resonances\" />
   </ItemGroup>
 
   <ItemGroup>

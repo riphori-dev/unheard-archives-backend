@@ -23,19 +23,22 @@ namespace Tywynh.Infrastructure.Persistence.Configuration
                 .HasColumnName("user_id")
                 .IsRequired(false);
 
-            builder.Property(r => r.AnonFingerprint)
-                .HasColumnName("anon_fingerprint")
+            builder.Property(r => r.VisitorTokenHash)
+                .HasColumnName("visitor_token_hash")
                 .HasMaxLength(255);
 
             builder.Property(r => r.CreatedAt)
                 .HasColumnName("created_at")
                 .IsRequired()
-                .HasDefaultValueSql("GETUTCDATE()");
+                .HasDefaultValueSql("NOW()");
 
             // Configure relationship
             builder.HasOne(r => r.Confession)
                 .WithMany()
                 .HasForeignKey(r => r.ConfessionId);
+
+            // Unique index to prevent duplicate resonances per visitor per confession
+            builder.HasIndex(r => new { r.ConfessionId, r.VisitorTokenHash }).IsUnique().HasDatabaseName("ix_resonances_confession_visitor");
         }
     }
 }

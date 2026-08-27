@@ -16,10 +16,8 @@ namespace Tywynh.Domain.Entities
         [Required]
         public DateTime EchoDate { get; private set; }
 
-        public Guid? UserId { get; private set; }
-
         [MaxLength(255)]
-        public string? AnonFingerprint { get; private set; }
+        public string? VisitorTokenHash { get; private set; }
 
         [Required]
         public bool RitualCompleted { get; private set; }
@@ -35,8 +33,7 @@ namespace Tywynh.Domain.Entities
 
         public static DailyEchoInteraction Create(
             DateTime echoDate,
-            Guid? userId,
-            string? anonFingerprint,
+            string? visitorTokenHash,
             bool ritualCompleted = false,
             bool echoed = false)
         {
@@ -44,8 +41,7 @@ namespace Tywynh.Domain.Entities
             {
                 Id = Guid.NewGuid(),
                 EchoDate = echoDate,
-                UserId = userId,
-                AnonFingerprint = anonFingerprint,
+                VisitorTokenHash = visitorTokenHash,
                 RitualCompleted = ritualCompleted,
                 Echoed = echoed,
                 CreatedAt = DateTime.UtcNow

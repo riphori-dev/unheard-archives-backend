@@ -43,18 +43,18 @@ namespace Tywynh.Infrastructure.Persistence.Repositories
             await Task.CompletedTask;
         }
 
-        public async Task<bool> UserHasInteractedAsync(DateTime echoDate, string? anonFingerprint, CancellationToken ct = default)
+        public async Task<bool> UserHasInteractedAsync(DateTime echoDate, string? visitorTokenHash, CancellationToken ct = default)
         {
             return await _context.Set<DailyEchoInteraction>()
                 .AnyAsync(d => d.EchoDate == echoDate && 
-                           d.AnonFingerprint == anonFingerprint, ct);
+                           d.VisitorTokenHash == visitorTokenHash, ct);
         }
 
-        public async Task<DailyEchoInteraction?> GetByEchoDateAndUserAsync(DateTime echoDate, string? anonFingerprint, CancellationToken ct = default)
+        public async Task<DailyEchoInteraction?> GetByEchoDateAndUserAsync(DateTime echoDate, string? visitorTokenHash, CancellationToken ct = default)
         {
             return await _context.Set<DailyEchoInteraction>()
                 .FirstOrDefaultAsync(d => d.EchoDate == echoDate && 
-                           d.AnonFingerprint == anonFingerprint, ct);
+                           d.VisitorTokenHash == visitorTokenHash, ct);
         }
 
         public async Task<IEnumerable<DailyEchoInteraction>> GetByEchoDateAsync(DateTime echoDate, CancellationToken ct = default)

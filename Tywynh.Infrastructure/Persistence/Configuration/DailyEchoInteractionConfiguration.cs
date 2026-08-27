@@ -23,11 +23,8 @@ namespace Tywynh.Infrastructure.Persistence.Configuration
                     v => v.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(v, DateTimeKind.Utc) : v,
                     v => v.Kind == DateTimeKind.Utc ? v : DateTime.SpecifyKind(v, DateTimeKind.Utc));
 
-            builder.Property(d => d.UserId)
-                .HasColumnName("user_id");
-
-            builder.Property(d => d.AnonFingerprint)
-                .HasColumnName("anon_fingerprint")
+            builder.Property(d => d.VisitorTokenHash)
+                .HasColumnName("visitor_token_hash")
                 .HasMaxLength(255);
 
             builder.Property(d => d.RitualCompleted)
@@ -44,10 +41,10 @@ namespace Tywynh.Infrastructure.Persistence.Configuration
                 .HasConversion(
                     v => v.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(v, DateTimeKind.Utc) : v,
                     v => v.Kind == DateTimeKind.Utc ? v : DateTime.SpecifyKind(v, DateTimeKind.Utc))
-                .HasDefaultValueSql("GETUTCDATE()");
+                .HasDefaultValueSql("NOW()");
 
             // Ensure one interaction per user per daily echo
-            builder.HasIndex(d => new { d.EchoDate, d.AnonFingerprint })
+            builder.HasIndex(d => new { d.EchoDate, d.VisitorTokenHash })
                 .IsUnique();
         }
     }

@@ -28,7 +28,7 @@ namespace Tywynh.Infrastructure.Persistence.Configuration
             builder.Property(d => d.CreatedAt)
                 .HasColumnName("created_at")
                 .IsRequired()
-                .HasDefaultValueSql("GETUTCDATE()");
+                .HasDefaultValueSql("NOW()");
 
             // Configure relationship
             builder.HasOne(d => d.Confession)

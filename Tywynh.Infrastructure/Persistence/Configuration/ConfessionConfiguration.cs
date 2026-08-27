@@ -1,6 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Tywynh.Domain.Entities;
+using Tywynh.Domain.Enums;
 
 namespace Tywynh.Infrastructure.Persistence.Configuration
 {
@@ -20,12 +22,14 @@ namespace Tywynh.Infrastructure.Persistence.Configuration
             builder.Property(c => c.Text)
                 .HasColumnName("text")
                 .IsRequired()
-                .HasMaxLength(2000);
+                .HasMaxLength(500);
 
             builder.Property(c => c.Category)
                 .HasColumnName("category")
                 .IsRequired()
-                .HasMaxLength(50);
+                .HasConversion(
+                    v => v.ToString().ToLower(),
+                    v => Enum.Parse<ConfessionCategory>(v, true));
 
             builder.Property(c => c.Intensity)
                 .HasColumnName("intensity")
@@ -61,11 +65,33 @@ namespace Tywynh.Infrastructure.Persistence.Configuration
             builder.Property(c => c.CreatedAt)
                 .HasColumnName("created_at")
                 .IsRequired()
-                .HasDefaultValueSql("GETUTCDATE()");
+                .HasDefaultValueSql("NOW()");
+
+            // Moderation properties
+            builder.Property(c => c.ModerationStatus)
+                .HasColumnName("moderation_status")
+                .IsRequired()
+                .HasMaxLength(20)
+                .HasDefaultValue("pending");
+
+            builder.Property(c => c.RejectionReason)
+                .HasColumnName("rejection_reason")
+                .IsRequired(false)
+                .HasMaxLength(500);
+
+            builder.Property(c => c.ModeratedAt)
+                .HasColumnName("moderated_at")
+                .IsRequired(false)
+                .HasColumnType("timestamptz");
 
             builder.Property(c => c.ApprovedAt)
                 .HasColumnName("approved_at")
                 .IsRequired(false);
+            // Indexes
+            builder.HasIndex(c => c.ModerationStatus).HasDatabaseName("ix_confessions_moderation_status");
+            builder.HasIndex(c => c.Category).HasDatabaseName("ix_confessions_category");
+            builder.HasIndex(c => c.CreatedAt).HasDatabaseName("ix_confessions_created_at");
+            builder.HasIndex(c => c.ResonanceCount).HasDatabaseName("ix_confessions_resonance_count");
         }
     }
 }
