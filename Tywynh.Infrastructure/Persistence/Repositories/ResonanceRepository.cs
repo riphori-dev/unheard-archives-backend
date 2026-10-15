@@ -13,7 +13,7 @@ namespace Tywynh.Infrastructure.Persistence.Repositories
             _context = context;
         }
 
-        public async Task<Resonance> GetByIdAsync(Guid id, CancellationToken ct = default)
+        public async Task<Resonance?> GetByIdAsync(Guid id, CancellationToken ct = default)
         {
             return await _context.Set<Resonance>()
                 .FirstOrDefaultAsync(r => r.Id == id, ct);

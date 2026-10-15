@@ -13,7 +13,7 @@ namespace Tywynh.Infrastructure.Persistence.Repositories
             _context = context;
         }
 
-        public async Task<DailyEchoInteraction> GetByIdAsync(Guid id, CancellationToken ct = default)
+        public async Task<DailyEchoInteraction?> GetByIdAsync(Guid id, CancellationToken ct = default)
         {
             return await _context.Set<DailyEchoInteraction>()
                 .FirstOrDefaultAsync(d => d.Id == id, ct);

@@ -63,7 +63,7 @@ namespace Tywynh.Domain.Entities
             Guid? authorId,
             string alias)
         {
-            if (string.IsNullOrWhiteSpace(text))
+            if (string.IsNullOrWhiteSpace(text) || text.Trim().Length > 500)
                 throw new DomainException("Confession text is required.");
 
             if (string.IsNullOrWhiteSpace(alias))
@@ -93,8 +93,26 @@ namespace Tywynh.Domain.Entities
         // DOMAIN BEHAVIORS
         // =========================
 
+        [NotMapped]
+        public bool IsPublic => Approved && !Burned && ModerationStatus == "approved";
+
+        public void Replace(string text, ConfessionCategory category)
+        {
+            if (Burned) throw new DomainException("Withdrawn writing cannot be replaced.");
+            if (string.IsNullOrWhiteSpace(text) || text.Trim().Length > 500) throw new DomainException("Writing must contain 1–500 characters.");
+            Text = text.Trim();
+            ResonanceCount = 0;
+            EchoCount = 0;
+            Category = category;
+            Approved = false;
+            ApprovedAt = null;
+            ModerationStatus = "pending";
+            RejectionReason = null;
+        }
+
         public void Approve()
         {
+            if (Burned || ModerationStatus == "deleted") throw new DomainException("Deleted writing cannot be approved.");
             if (ModerationStatus == "approved") return;
             ModerationStatus = "approved";
             Approved = true;

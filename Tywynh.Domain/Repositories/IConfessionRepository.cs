@@ -9,9 +9,10 @@ namespace Tywynh.Domain.Repositories
 {
     public interface IConfessionRepository : IBaseRepo<Confession>
     {
-        new Task<Confession> GetByIdAsync(Guid id, CancellationToken ct = default);
-        Task UpdateAsync(Confession confession, CancellationToken ct = default);
-        Task DeleteAsync(Confession confession, CancellationToken ct = default);
+        Task RequestExternalRemovalAsync(Guid id, CancellationToken ct = default);
+        Task<IEnumerable<Confession>> GetModeratedAsync(string status, CancellationToken ct = default);
+        Task<Confession?> SelectDailyAsync(string dateKey, CancellationToken ct = default);
+        Task<Confession?> GetPublicByIdAsync(Guid id, CancellationToken ct = default);
         Task<(IEnumerable<Confession> Items, int TotalCount)> GetPagedAsync(
             string? category,
             string sort,

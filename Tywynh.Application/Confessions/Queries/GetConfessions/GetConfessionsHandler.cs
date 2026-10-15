@@ -34,13 +34,9 @@ namespace Tywynh.Application.Confessions.Queries.GetConfessions
                 Category = confession.Category,
                 Intensity = confession.Intensity,
                 Alias = confession.Alias,
-                AuthorId = confession.AuthorId,
-                Approved = confession.Approved,
                 ResonanceCount = confession.ResonanceCount,
                 EchoCount = confession.EchoCount,
-                Burned = confession.Burned,
                 CreatedAt = confession.CreatedAt,
-                ApprovedAt = confession.ApprovedAt
             });
 
             return new Tywynh.Application.Common.PagedResult<ConfessionDto>(confessions, totalCount, request.Page, request.PageSize);

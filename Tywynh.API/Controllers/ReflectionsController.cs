@@ -7,17 +7,21 @@ using Tywynh.API.Services;
 public class ReflectionsController : ControllerBase
 {
     private readonly IReflectionService _reflectionService;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<ReflectionsController> _logger;
 
-    public ReflectionsController(IReflectionService reflectionService, ILogger<ReflectionsController> logger)
+    public ReflectionsController(IReflectionService reflectionService, ILogger<ReflectionsController> logger, IConfiguration configuration)
     {
         _reflectionService = reflectionService;
         _logger = logger;
+        _configuration = configuration;
     }
 
+    [Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("reflection")]
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] ReflectionRequest req, CancellationToken cancellationToken)
     {
+        if (!_configuration.GetValue<bool>("Features:ReflectionsEnabled")) return StatusCode(503, new { title = "Reflections are not enabled." });
         if (req is null || string.IsNullOrWhiteSpace(req.ConfessionText))
             return BadRequest("confessionText is required");
 

@@ -23,7 +23,7 @@ public class AdminKeyAuthFilter : IActionFilter
         }
 
         if (!context.HttpContext.Request.Headers.TryGetValue("X-Admin-Key", out var providedKey)
-            || providedKey != expectedKey)
+            || !System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(System.Text.Encoding.UTF8.GetBytes(providedKey.ToString()), System.Text.Encoding.UTF8.GetBytes(expectedKey)))
         {
             context.Result = new UnauthorizedResult();
         }

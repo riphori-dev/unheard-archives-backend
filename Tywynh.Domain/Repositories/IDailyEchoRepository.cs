@@ -9,7 +9,7 @@ namespace Tywynh.Domain.Repositories
 {
     public interface IDailyEchoRepository : IBaseRepo<DailyEcho, DateTime>
     {
-        Task<DailyEcho> GetTodayEchoAsync(CancellationToken ct = default);
+        Task<DailyEcho?> GetTodayEchoAsync(CancellationToken ct = default);
         Task<bool> ExistsForDateAsync(DateTime date, CancellationToken ct = default);
     }
 }

@@ -29,7 +29,6 @@ namespace Tywynh.Application.Confessions.Commands.CreateConfession
 
         public async Task<CreateConfessionDTO> Handle(CreateConfessionCommand command, CancellationToken ct)
         {
-            var authorId = Guid.NewGuid();
             var alias = _aliasGenerator.Generate();
             // 1. Create Confession
             var confession = Confession.Create(command.Text,

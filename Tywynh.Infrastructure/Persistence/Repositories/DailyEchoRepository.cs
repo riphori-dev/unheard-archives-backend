@@ -13,7 +13,7 @@ namespace Tywynh.Infrastructure.Persistence.Repositories
             _context = context;
         }
 
-        public async Task<DailyEcho> GetByIdAsync(DateTime date, CancellationToken ct = default)
+        public async Task<DailyEcho?> GetByIdAsync(DateTime date, CancellationToken ct = default)
         {
             return await _context.Set<DailyEcho>()
                 .Include(d => d.Confession)
@@ -45,7 +45,7 @@ namespace Tywynh.Infrastructure.Persistence.Repositories
             await Task.CompletedTask;
         }
 
-        public async Task<DailyEcho> GetTodayEchoAsync(CancellationToken ct = default)
+        public async Task<DailyEcho?> GetTodayEchoAsync(CancellationToken ct = default)
         {
             return await GetByIdAsync(DateTime.UtcNow, ct);
         }

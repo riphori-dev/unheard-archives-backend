@@ -1,73 +1,35 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using MediatR;
+using Tywynh.API.Services;
 using Tywynh.Application.Confessions.Queries.GetConfessions;
 using Tywynh.Application.Confessions.Queries.GetConfessionById;
-using Tywynh.Application.Confessions.Commands.CreateConfession;
-using Tywynh.Domain.Enums;
-using Tywynh.API.Services;
 using Tywynh.Application.Resonances.Commands.AddResonance;
 using Tywynh.Application.Resonances.Commands.RemoveResonance;
-using Tywynh.Application.Resonances.DTOs;
-using Microsoft.AspNetCore.RateLimiting;
-
-[ApiController]
-[Route("api/confessions")]
-public class ConfessionsController : ControllerBase
+[ApiController, Route("api/confessions")]
+public class ConfessionsController(IMediator mediator, VisitorTokenService visitors, ArchiveWorkflowService workflow) : ControllerBase
 {
-    private readonly IMediator _mediator;
-    private readonly VisitorTokenService _visitorTokenService;
-
-    public ConfessionsController(IMediator mediator, VisitorTokenService visitorTokenService)
-    {
-        _mediator = mediator;
-        _visitorTokenService = visitorTokenService;
-    }
-
     [HttpGet]
-    public async Task<IActionResult> Get([FromQuery] string? category, [FromQuery] string sort = "latest", [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    public async Task<IActionResult> Get(string? category, string sort = "latest", int page = 1, int pageSize = 20, CancellationToken ct = default)
     {
-        var result = await _mediator.Send(new GetConfessionsQuery(category, sort, page, Math.Clamp(pageSize, 1, 100)));
-        return Ok(result);
+        if (page < 1 || page > 100000 || pageSize < 1 || pageSize > 100 || !new[] { "latest", "resonated", "random" }.Contains(sort)) return BadRequest(new { title = "Invalid pagination or sort." });
+        if (!string.IsNullOrWhiteSpace(category) && category != "all") ArchiveWorkflowService.Category(category);
+        return Ok(await mediator.Send(new GetConfessionsQuery(category, sort, page, pageSize), ct));
     }
-
     [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id)
+    public async Task<IActionResult> GetById(Guid id, CancellationToken ct) => Ok(await mediator.Send(new GetConfessionByIdQuery(id), ct));
+    [HttpPost, EnableRateLimiting("submission")]
+    public async Task<IActionResult> Post(ArchiveWorkflowService.Submission input, CancellationToken ct) => StatusCode(201, await workflow.Submit(input, Request.Headers["Idempotency-Key"].ToString(), ct));
+    [HttpPost("{id:guid}/resonate"), EnableRateLimiting("resonance")]
+    public async Task<IActionResult> Resonate(Guid id, CancellationToken ct)
     {
-        var result = await _mediator.Send(new GetConfessionByIdQuery(id));
-        return Ok(result);
+        var hash = visitors.HashToken(visitors.GetOrCreateVisitorToken(HttpContext));
+        return Ok(await mediator.Send(new AddResonanceCommand(id, null, hash), ct));
     }
-
-    public record SubmitConfessionRequest(string Text, string Category, short Intensity);
-    public record SubmitConfessionResponseDto(Guid Id);
-
-    [HttpPost]
-        public async Task<IActionResult> Post([FromBody] SubmitConfessionRequest req)
+    [HttpDelete("{id:guid}/resonate"), EnableRateLimiting("resonance")]
+    public async Task<IActionResult> Remove(Guid id, CancellationToken ct)
     {
-        if (!Enum.TryParse<ConfessionCategory>(req.Category, true, out var parsed))
-            return BadRequest("Invalid category");
-        var cmd = new Tywynh.Application.Confessions.Commands.CreateConfession.CreateConfessionCommand(req.Text, parsed, req.Intensity, "anonymous");
-        var result = await _mediator.Send(cmd);
-        return CreatedAtAction(nameof(GetById), new { id = result.Id }, new SubmitConfessionResponseDto(result.Id));
-    }
-
-    [HttpPost("{id:guid}/resonate")]
-    [EnableRateLimiting("resonance")]
-    public async Task<IActionResult> Resonate(Guid id)
-    {
-        var token = _visitorTokenService.GetOrCreateVisitorToken(HttpContext);
-        var hash = _visitorTokenService.HashToken(token);
-
-        var result = await _mediator.Send(new AddResonanceCommand(id, null, hash));
-        return Ok(result);
-    }
-
-    [HttpDelete("{id:guid}/resonate")]
-    public async Task<IActionResult> RemoveResonate(Guid id)
-    {
-        var token = _visitorTokenService.GetOrCreateVisitorToken(HttpContext);
-        var hash = _visitorTokenService.HashToken(token);
-
-        var result = await _mediator.Send(new RemoveResonanceCommand(id, hash));
-        return Ok(result);
+        var hash = visitors.HashToken(visitors.GetOrCreateVisitorToken(HttpContext));
+        return Ok(await mediator.Send(new RemoveResonanceCommand(id, hash), ct));
     }
 }

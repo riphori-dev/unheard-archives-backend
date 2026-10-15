@@ -1,29 +1,20 @@
-﻿using System.IO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using Microsoft.Extensions.Configuration;
-using Tywynh.Infrastructure.Persistence;
 
-namespace Tywynh.Infrastructure.Persistence
+namespace Tywynh.Infrastructure.Persistence;
+
+public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
 {
-    public class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
+    public AppDbContext CreateDbContext(string[] args)
     {
-        public AppDbContext CreateDbContext(string[] args)
-        {
-            var configuration = new ConfigurationBuilder()
-                .SetBasePath(Path.Combine(Directory.GetCurrentDirectory(), "../Tywynh.API"))
-                .AddJsonFile("appsettings.json", optional: false)
-                .AddJsonFile("appsettings.Development.json", optional: true)
-                .Build();
+        // Migration tooling requires an explicit target; do not discover a different checkout's settings.
+        var connection = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+        if (string.IsNullOrWhiteSpace(connection))
+            throw new InvalidOperationException("Set ConnectionStrings__DefaultConnection explicitly before running EF tools.");
 
-            var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
-
-            optionsBuilder.UseNpgsql(
-                configuration.GetConnectionString("DefaultConnection"),
-                b => b.MigrationsAssembly("Tywynh.Infrastructure")
-            );
-
-            return new AppDbContext(optionsBuilder.Options);
-        }
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(connection, builder => builder.MigrationsAssembly("Tywynh.Infrastructure"))
+            .Options;
+        return new AppDbContext(options);
     }
 }

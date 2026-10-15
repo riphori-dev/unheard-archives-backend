@@ -1,3 +1,3 @@
 namespace Tywynh.Application.Resonances.DTOs;
 
-public record ResonanceResultDto(int Count, bool IsNew);
+public record ResonanceResultDto(int ResonanceCount, bool IsNew);

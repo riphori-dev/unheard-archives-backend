@@ -26,12 +26,15 @@ namespace Tywynh.Application.Resonances.Commands.AddResonance
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<Tywynh.Application.Resonances.DTOs.ResonanceResultDto> Handle(AddResonanceCommand request, CancellationToken cancellationToken)
+        public Task<Tywynh.Application.Resonances.DTOs.ResonanceResultDto> Handle(AddResonanceCommand request, CancellationToken cancellationToken) =>
+        _unitOfWork.ExecuteSerializedAsync("confession:" + request.ConfessionId, () => HandleCore(request, cancellationToken), cancellationToken);
+
+    private async Task<Tywynh.Application.Resonances.DTOs.ResonanceResultDto> HandleCore(AddResonanceCommand request, CancellationToken cancellationToken)
         {
             // Get the confession to increment its resonance count
             var confession = await _confessionRepository.GetByIdAsync(request.ConfessionId, cancellationToken);
             
-            if (confession == null)
+            if (confession == null || !confession.IsPublic)
             {
                 throw new KeyNotFoundException($"Confession with ID {request.ConfessionId} not found.");
             }

@@ -26,11 +26,14 @@ namespace Tywynh.Application.DailyEchoes.Commands.AddInteraction
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<Tywynh.Application.DailyEchoes.DTOs.EchoInteractResultDto> Handle(AddInteractionCommand request, CancellationToken cancellationToken)
+        public Task<Tywynh.Application.DailyEchoes.DTOs.EchoInteractResultDto> Handle(AddInteractionCommand request, CancellationToken cancellationToken) =>
+        _unitOfWork.ExecuteSerializedAsync("daily:" + request.EchoDate.ToString("yyyy-MM-dd"), () => HandleCore(request, cancellationToken), cancellationToken);
+
+    private async Task<Tywynh.Application.DailyEchoes.DTOs.EchoInteractResultDto> HandleCore(AddInteractionCommand request, CancellationToken cancellationToken)
         {
             // Ensure daily echo exists for the date
             var dailyEcho = await _dailyEchoRepository.GetByIdAsync(request.EchoDate, cancellationToken);
-            if (dailyEcho == null)
+            if (dailyEcho == null || !dailyEcho.Confession.IsPublic)
             {
                 throw new KeyNotFoundException($"No daily echo found for date: {request.EchoDate:yyyy-MM-dd}");
             }

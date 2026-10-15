@@ -20,7 +20,10 @@ namespace Tywynh.Application.Confessions.Commands.ApproveConfession
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<bool> Handle(ApproveConfessionCommand request, CancellationToken cancellationToken)
+        public Task<bool> Handle(ApproveConfessionCommand request, CancellationToken cancellationToken) =>
+        _unitOfWork.ExecuteSerializedAsync("confession:" + request.Id, () => HandleCore(request, cancellationToken), cancellationToken);
+
+    private async Task<bool> HandleCore(ApproveConfessionCommand request, CancellationToken cancellationToken)
         {
             var confession = await _confessionRepository.GetByIdAsync(request.Id, cancellationToken);
             

@@ -248,6 +248,54 @@ namespace Tywynh.Infrastructure.Migrations
 
                     b.Navigation("Confession");
                 });
+
+            modelBuilder.Entity("Tywynh.Domain.Entities.SubmissionReceipt", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("ConfessionId").HasColumnType("uuid");
+                b.Property<string>("IdempotencyHash").IsRequired().HasMaxLength(64).HasColumnType("character varying(64)");
+                b.Property<string>("RequestHash").IsRequired().HasMaxLength(64).HasColumnType("character varying(64)");
+                b.Property<string>("ReceiptHash").IsRequired().HasMaxLength(64).HasColumnType("character varying(64)");
+                b.Property<bool>("ArchiveConsent").HasColumnType("boolean");
+                b.Property<bool>("TikTokConsent").HasColumnType("boolean");
+                b.Property<DateTime>("ConsentedAt").HasColumnType("timestamp with time zone");
+                b.Property<string>("ConsentVersion").IsRequired().HasMaxLength(30).HasColumnType("character varying(30)");
+                b.HasKey("Id");
+                b.HasIndex("ConfessionId").IsUnique();
+                b.HasIndex("IdempotencyHash").IsUnique();
+                b.ToTable("SubmissionReceipts");
+                b.HasOne("Tywynh.Domain.Entities.Confession", null).WithMany().HasForeignKey("ConfessionId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+            });
+
+            modelBuilder.Entity("Tywynh.Domain.Entities.PublicationRecord", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("ConfessionId").HasColumnType("uuid");
+                b.Property<string>("Excerpt").IsRequired().HasMaxLength(500).HasColumnType("character varying(500)");
+                b.Property<DateTime>("ReviewedAt").HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("PublishedAt").HasColumnType("timestamp with time zone");
+                b.Property<string>("PostUrl").HasMaxLength(1000).HasColumnType("character varying(1000)");
+                b.Property<DateTime?>("RemovalRequestedAt").HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("RemovedAt").HasColumnType("timestamp with time zone");
+                b.HasKey("Id");
+                b.HasIndex("ConfessionId");
+                b.ToTable("Publications");
+                b.HasOne("Tywynh.Domain.Entities.Confession", null).WithMany().HasForeignKey("ConfessionId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+            });
+
+            modelBuilder.Entity("Tywynh.Domain.Entities.ContentReport", b =>
+            {
+                b.Property<Guid>("Id").ValueGeneratedOnAdd().HasColumnType("uuid");
+                b.Property<Guid>("ConfessionId").HasColumnType("uuid");
+                b.Property<string>("Reason").IsRequired().HasMaxLength(100).HasColumnType("character varying(100)");
+                b.Property<string>("Details").HasMaxLength(500).HasColumnType("character varying(500)");
+                b.Property<DateTime>("CreatedAt").HasColumnType("timestamp with time zone");
+                b.Property<DateTime?>("ResolvedAt").HasColumnType("timestamp with time zone");
+                b.HasKey("Id");
+                b.HasIndex("ConfessionId");
+                b.ToTable("ContentReports");
+                b.HasOne("Tywynh.Domain.Entities.Confession", null).WithMany().HasForeignKey("ConfessionId").OnDelete(DeleteBehavior.Cascade).IsRequired();
+            });
 #pragma warning restore 612, 618
         }
     }

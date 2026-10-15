@@ -20,7 +20,7 @@ namespace Tywynh.Application.Confessions.Queries.GetConfessionById
 
         public async Task<ConfessionDto> Handle(GetConfessionByIdQuery request, CancellationToken cancellationToken)
         {
-            var confession = await _confessionRepository.GetByIdAsync(request.Id, cancellationToken);
+            var confession = await _confessionRepository.GetPublicByIdAsync(request.Id, cancellationToken);
             
             if (confession == null)
             {
@@ -34,13 +34,9 @@ namespace Tywynh.Application.Confessions.Queries.GetConfessionById
                 Category = confession.Category,
                 Intensity = confession.Intensity,
                 Alias = confession.Alias,
-                AuthorId = confession.AuthorId,
-                Approved = confession.Approved,
                 ResonanceCount = confession.ResonanceCount,
                 EchoCount = confession.EchoCount,
-                Burned = confession.Burned,
                 CreatedAt = confession.CreatedAt,
-                ApprovedAt = confession.ApprovedAt
             };
         }
     }

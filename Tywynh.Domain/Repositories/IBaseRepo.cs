@@ -8,7 +8,7 @@ namespace Tywynh.Domain.Repositories
 {
     public interface IBaseRepo<T> where T : class
     {
-        Task<T> GetByIdAsync(Guid id, CancellationToken ct = default);
+        Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default);
 
         Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default);
         Task AddAsync(T entity, CancellationToken ct = default);
@@ -18,7 +18,7 @@ namespace Tywynh.Domain.Repositories
 
     public interface IBaseRepo<T, TKey> where T : class
     {
-        Task<T> GetByIdAsync(TKey id, CancellationToken ct = default);
+        Task<T?> GetByIdAsync(TKey id, CancellationToken ct = default);
         Task<IEnumerable<T>> GetAllAsync(CancellationToken ct = default);
         Task AddAsync(T entity, CancellationToken ct = default);
         Task UpdateAsync(T entity, CancellationToken ct = default);

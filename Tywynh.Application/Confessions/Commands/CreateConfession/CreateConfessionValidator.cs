@@ -12,7 +12,8 @@ namespace Tywynh.Application.Confessions.Commands.CreateConfession
         public CreateConfessionValidator()
         {
             RuleFor(x => x.Text)
-                .NotEmpty().WithMessage("Confession text is required.");
+                .NotEmpty().WithMessage("Confession text is required.")
+                .Must(t => t != null && t.Trim().Length <= 500).WithMessage("Writing must not exceed 500 characters.");
 
             RuleFor(x => x.Alias)
                 .NotEmpty().WithMessage("Alias is required.");

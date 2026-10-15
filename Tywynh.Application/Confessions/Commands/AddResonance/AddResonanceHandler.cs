@@ -24,7 +24,7 @@ namespace Tywynh.Application.Confessions.Commands.AddResonance
         {
             var confession = await _confessionRepository.GetByIdAsync(request.ConfessionId, cancellationToken);
             
-            if (confession == null)
+            if (confession == null || !confession.IsPublic)
             {
                 throw new KeyNotFoundException($"Confession with ID {request.ConfessionId} not found.");
             }

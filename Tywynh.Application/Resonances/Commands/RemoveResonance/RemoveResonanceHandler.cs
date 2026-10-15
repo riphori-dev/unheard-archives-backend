@@ -21,11 +21,14 @@ public class RemoveResonanceHandler : IRequestHandler<RemoveResonanceCommand, Re
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<ResonanceResultDto> Handle(RemoveResonanceCommand request, CancellationToken cancellationToken)
+    public Task<ResonanceResultDto> Handle(RemoveResonanceCommand request, CancellationToken cancellationToken) =>
+        _unitOfWork.ExecuteSerializedAsync("confession:" + request.ConfessionId, () => HandleCore(request, cancellationToken), cancellationToken);
+
+    private async Task<ResonanceResultDto> HandleCore(RemoveResonanceCommand request, CancellationToken cancellationToken)
     {
         var resonance = await _resonanceRepository.GetByConfessionAndTokenAsync(request.ConfessionId, request.VisitorTokenHash, cancellationToken);
         var confession = await _confessionRepository.GetByIdAsync(request.ConfessionId, cancellationToken);
-        if (confession == null)
+        if (confession == null || !confession.IsPublic)
             throw new KeyNotFoundException($"Confession with ID {request.ConfessionId} not found.");
 
         if (resonance != null)

@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -10,13 +11,14 @@ namespace Tywynh.Application
 {
     public static class DependencyInjection
     {
-        public static IServiceCollection AddApplication(this IServiceCollection services)
+        public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
             var assembly = typeof(DependencyInjection).Assembly;
 
             services.AddMediatR(cfg =>
             {
                 cfg.RegisterServicesFromAssembly(assembly);
+                cfg.LicenseKey = configuration["MediatR:LicenseKey"];
                 cfg.AddBehavior(typeof(MediatR.IPipelineBehavior<,>), typeof(Tywynh.Application.Common.ValidationPipelineBehavior<,>));
             });
 

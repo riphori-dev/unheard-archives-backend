@@ -44,7 +44,8 @@ public class ReflectionService : IReflectionService
             generationConfig = new { maxOutputTokens = 50 }
         };
 
-        using var req = new HttpRequestMessage(HttpMethod.Post, $"v1beta/models/gemini-3.1-flash-lite:generateContent?key={Uri.EscapeDataString(_apiKey)}");
+        using var req = new HttpRequestMessage(HttpMethod.Post, "v1beta/models/gemini-3.1-flash-lite:generateContent");
+        req.Headers.Add("x-goog-api-key", _apiKey);
         req.Content = JsonContent.Create(requestBody);
 
         HttpResponseMessage resp;
@@ -63,6 +64,7 @@ public class ReflectionService : IReflectionService
             throw;
         }
 
+        using var responseLifetime = resp;
         if (!resp.IsSuccessStatusCode)
         {
             _logger.LogError("Gemini returned non-success status {StatusCode} when generating reflection", resp.StatusCode);
@@ -85,7 +87,7 @@ public class ReflectionService : IReflectionService
     private static string EscapeForPrompt(string input)
     {
         // Treat user content as data; escape sequences that may interfere with prompt formatting
-        return input?.Replace("</confession>", "</confession>") ?? string.Empty;
+        return input?.Replace("<", "&lt;").Replace(">", "&gt;") ?? string.Empty;
     }
 
     private static string? ExtractTextFromGeminiResponse(JsonElement root)

@@ -1,63 +1,49 @@
-# Unheard Archives Backend
+# The Unheard Archive API
 
-Backend API for the Tywynh Unheard Archives application, built with .NET 8 and PostgreSQL.
+Current .NET backend for The Unheard Archive. The frontend is maintained separately in `../the-unheard-archive`; the sibling `../Tywynh.API` checkout is an older implementation.
 
-## Overview
+## Architecture and requirements
 
-This solution implements a clean architecture-style backend with separate layers for API, application logic, domain entities, and infrastructure.
-
-### Key components
-
-- `Tywynh.API/` - ASP.NET Core Web API host and controller layer
-- `Tywynh.Application/` - application services, commands, queries, and DTOs
-- `Tywynh.Domain/` - core domain entities, enums, interfaces, and value objects
-- `Tywynh.Infrastructure/` - data access, EF Core persistence, and database context
-
-## Getting Started
-
-### Prerequisites
-
-- .NET 8 SDK
-- PostgreSQL database
-- Git
-
-### Setup
-
-1. Restore packages:
-
-```bash
-dotnet restore
-```
-
-2. Copy the example configuration:
-
-```bash
-copy Tywynh.API\appsettings.example.json Tywynh.API\appsettings.json
-```
-
-3. Update `Tywynh.API/appsettings.json` with your PostgreSQL connection details.
-
-4. Run the API:
-
-```bash
-dotnet run --project Tywynh.API\Tywynh.API.csproj
-```
+.NET 8 ASP.NET Core, MediatR application handlers, domain entities, EF Core/Npgsql repositories, and PostgreSQL. Use a compatible .NET SDK and PostgreSQL 16 for local checks. The API includes owner workflow controllers/services for receipt management, consent-aware publication records, and concerns. AI reflections are disabled by default.
 
 ## Configuration
 
-- `Tywynh.API/appsettings.json` is treated as a local configuration file and is ignored by git.
-- Use `Tywynh.API/appsettings.example.json` as the template for local setup.
-- Do not commit production connection strings or secret credentials.
+Runtime values can be supplied through standard .NET environment variables. See `Tywynh.API/appsettings.example.json` for the configuration structure and the frontend `docs/OPERATIONS.md` for the complete runbook.
 
-## Project Structure
+- `ConnectionStrings__DefaultConnection`: explicitly chosen PostgreSQL database.
+- `Gateway__SharedKey`: at least 32 characters; matches the frontend's server-only gateway key.
+- `Receipts__SigningKey`: durable, independent receipt signing key; at least 32 bytes.
+- `Moderation__AdminKey`: separate protected moderation key; injected by the frontend server.
+- `Features__ReflectionsEnabled`: false until deliberately enabled with a configured Gemini key.
+- `Hosting__KnownProxies__0`: explicitly verified reverse proxies, when applicable.
 
-- `Tywynh.API/` - API startup, controllers, middleware
-- `Tywynh.Application/` - business rules, command/query handlers, dependency injection registration
-- `Tywynh.Domain/` - entities, enums, repository contracts, domain exceptions
-- `Tywynh.Infrastructure/` - EF Core DbContext, repositories, persistence implementation
+Production API calls fail closed unless authenticated by the archive gateway. Health endpoints remain accessible for readiness/liveness checks. Do not expose keys, receipt tokens, cookies, or story text in logs.
 
-## Notes
+## Build and run locally
 
-- Keep secret values out of source control.
-- Use environment variables or user secrets for production deployments.
-- `appsettings.Development.json` can be used for development-specific settings without exposing secrets.
+```powershell
+dotnet restore Tywynh.API/Tywynh.API.csproj
+dotnet build Tywynh.API/Tywynh.API.csproj -c Release --no-restore
+dotnet run --project Tywynh.API --no-launch-profile
+```
+
+Set environment values before starting; use a disposable localhost database for development checks. Configure `ASPNETCORE_URLS` to a loopback address when previewing locally.
+
+## Migrations and verification
+
+There are no automatic startup migrations. EF tooling requires an explicit `ConnectionStrings__DefaultConnection`; it does not discover a sibling checkout's configuration. Apply migrations only to a deliberately selected database after the required backup and authorization.
+
+The critical-flow runner refuses remote hosts and database names without `_test`. It creates a unique schema, applies migrations there, starts a localhost API, exercises public boundaries/contracts/idempotency/consent/receipts/concurrency/reporting/rate limits, and cleans up its schema.
+
+```powershell
+# Set ARCHIVE_TEST_DB to the connection string of your disposable localhost *_test database.
+dotnet run --project Tests/ArchiveChecks -c Release
+```
+
+For restricted environments, read-only Git inspection works with `git --git-dir=.git --work-tree=. status --short`. No Git metadata repair was necessary during implementation.
+
+## Release constraints
+
+Verify real API/database hosting, TLS termination, backup retention, staging, and rollback before release. The contributor-workflow migration is additive and does not infer permission for legacy writing. Do not run the prototype under `Tools/DropTables`. Do not deploy, migrate production, or post externally without separate authorization.
+
+See the frontend `docs/IMPLEMENTATION_REPORT.md`, `docs/IMPROVEMENT_PLAN.md`, and `docs/PRODUCT_DIRECTION.md` for project status and editorial operation.

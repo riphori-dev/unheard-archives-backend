@@ -27,7 +27,10 @@ public class GetDailyEchoHandler : IRequestHandler<GetDailyEchoQuery, DailyEchoR
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<DailyEchoResponseDto> Handle(GetDailyEchoQuery request, CancellationToken ct)
+    public Task<DailyEchoResponseDto> Handle(GetDailyEchoQuery request, CancellationToken ct) =>
+        _unitOfWork.ExecuteSerializedAsync("daily:" + (request.Date ?? DateTime.UtcNow).ToString("yyyy-MM-dd"), () => HandleCore(request, ct), ct);
+
+    private async Task<DailyEchoResponseDto> HandleCore(GetDailyEchoQuery request, CancellationToken ct)
     {
         var date = request.Date?.Date ?? DateTime.UtcNow.Date;
         var dateKey = date.ToString("yyyy-MM-dd");
@@ -48,7 +51,7 @@ public class GetDailyEchoHandler : IRequestHandler<GetDailyEchoQuery, DailyEchoR
         }
 
         var confession = await _confessionRepository.GetByIdAsync(dailyEcho.ConfessionId, ct);
-        if (confession == null || !confession.Approved || confession.Burned)
+        if (confession == null || !confession.IsPublic)
             throw new KeyNotFoundException($"Confession for daily echo not found or not approved.");
 
         return new DailyEchoResponseDto
@@ -60,12 +63,9 @@ public class GetDailyEchoHandler : IRequestHandler<GetDailyEchoQuery, DailyEchoR
                 Category = confession.Category,
                 Intensity = confession.Intensity,
                 Alias = confession.Alias,
-                Approved = confession.Approved,
                 ResonanceCount = confession.ResonanceCount,
                 EchoCount = confession.EchoCount,
-                Burned = confession.Burned,
                 CreatedAt = confession.CreatedAt,
-                ApprovedAt = confession.ApprovedAt
             },
             Date = dateKey,
             EchoCount = dailyEcho.EchoCount,
@@ -79,19 +79,6 @@ public class GetDailyEchoHandler : IRequestHandler<GetDailyEchoQuery, DailyEchoR
         string dateKey,
         CancellationToken ct)
     {
-        var all = await _confessionRepository.GetAllAsync(ct);
-        var approved = all
-            .Where(c => c.Approved && !c.Burned)
-            .OrderBy(c => c.CreatedAt)
-            .ToList();
-
-        if (approved.Count == 0) return null;
-
-        var hash = 0;
-        foreach (var ch in dateKey)
-            hash = ((hash << 5) - hash + ch) | 0;
-        hash = Math.Abs(hash);
-
-        return approved[hash % approved.Count];
+        return await _confessionRepository.SelectDailyAsync(dateKey, ct);
     }
 }

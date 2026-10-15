@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
@@ -28,9 +28,14 @@ public class ExceptionMiddleware
         {
             await _next(ctx);
         }
+        catch (OperationCanceledException) when (ctx.RequestAborted.IsCancellationRequested)
+        {
+            // Navigation/request cancellation is expected; do not turn it into a logged server failure.
+        }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unhandled exception");
+            if (ex is not ValidationException && ex is not DomainException && ex is not KeyNotFoundException)
+                _logger.LogError(ex, "Unhandled exception");
             await HandleAsync(ctx, ex);
         }
     }
@@ -49,7 +54,7 @@ public class ExceptionMiddleware
                     .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray()) }
             },
             KeyNotFoundException => new ProblemDetails { Status = 404, Title = "Not found" },
-            DomainException de => new ProblemDetails { Status = 422, Title = de.Message },
+            DomainException de => new ProblemDetails { Status = 400, Title = de.Message },
             _ => new ProblemDetails
             {
                 Status = 500,

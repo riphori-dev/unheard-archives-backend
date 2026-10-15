@@ -1,0 +1,23 @@
+name: Backend checks
+on: [push, pull_request]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: archive-local-test-only
+          POSTGRES_DB: unheard_archive_test
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet restore Tywynh.API/Tywynh.API.csproj
+      - run: dotnet build Tywynh.API/Tywynh.API.csproj --no-restore -c Release
+      - run: dotnet run --project Tests/ArchiveChecks/ArchiveChecks.csproj -c Release
+        env:
+          ARCHIVE_TEST_DB: Host=127.0.0.1;Port=5432;Database=unheard_archive_test;Username=postgres;Password=archive-local-test-only
